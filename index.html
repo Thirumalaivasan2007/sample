@@ -1,0 +1,327 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AetherCalc: Zylron Edition</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: radial-gradient(circle at center, #0f0f1d, #05050a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent scrollbars from animations */
+        }
+
+        .calculator-body {
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 120px rgba(0, 255, 255, 0.1);
+            padding: 24px;
+            max-width: 360px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #display {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            font-size: 2.5em;
+            color: #E0E7FF;
+            text-align: right;
+            margin-bottom: 20px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            word-wrap: break-word;
+            word-break: break-all;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #display .previous-operand {
+            font-size: 0.8em;
+            opacity: 0.7;
+            height: 20px;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        #display .current-operand {
+            font-size: 1.2em;
+            height: 30px;
+            transition: transform 0.3s ease-out;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .calc-button {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #E0E7FF;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 20px 0;
+            font-size: 1.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            outline: none;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes button-press {
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 0 0 rgba(0, 200, 255, 0); }
+            50% { transform: scale(0.96); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(0, 200, 255, 0.2); }
+            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 0 0 rgba(0, 200, 255, 0); }
+        }
+        .calc-button:active {
+            animation: button-press 0.2s ease-out;
+            background-color: rgba(0, 200, 255, 0.15);
+            border-color: rgba(0, 200, 255, 0.4);
+            color: #CCEEFF;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 200, 255, 0.3);
+        }
+        .calc-button:hover:not(:active) {
+             background-color: rgba(255, 255, 255, 0.12);
+             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .operator {
+            color: #00C8FF;
+            background-color: rgba(0, 200, 255, 0.08);
+            border-color: rgba(0, 200, 255, 0.2);
+        }
+
+        .equals {
+            background-color: rgba(0, 200, 255, 0.2);
+            border-color: rgba(0, 200, 255, 0.4);
+            color: #CCEEFF;
+            grid-column: span 2; /* Span two columns */
+        }
+
+        .clear, .delete {
+            background-color: rgba(255, 50, 50, 0.1);
+            border-color: rgba(255, 50, 50, 0.3);
+            color: #FFCCCC;
+        }
+
+        .clear:hover:not(:active), .delete:hover:not(:active) {
+            background-color: rgba(255, 50, 50, 0.15);
+        }
+        .clear:active, .delete:active {
+            background-color: rgba(255, 50, 50, 0.25);
+            border-color: rgba(255, 50, 50, 0.5);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 50, 50, 0.3);
+        }
+
+    </style>
+</head>
+<body>
+    <div id="calculator-app" class="calculator-body">
+        <div id="display">
+            <div class="previous-operand text-2xl"></div>
+            <div class="current-operand text-5xl">0</div>
+        </div>
+        <div id="button-grid" class="button-grid">
+            <button class="calc-button clear" data-action="clear">AC</button>
+            <button class="calc-button delete" data-action="delete">DEL</button>
+            <button class="calc-button operator" data-action="operator" data-value="%">%</button>
+            <button class="calc-button operator" data-action="operator" data-value="/">/</button>
+
+            <button class="calc-button" data-action="number" data-value="7">7</button>
+            <button class="calc-button" data-action="number" data-value="8">8</button>
+            <button class="calc-button" data-action="number" data-value="9">9</button>
+            <button class="calc-button operator" data-action="operator" data-value="*">*</button>
+
+            <button class="calc-button" data-action="number" data-value="4">4</button>
+            <button class="calc-button" data-action="number" data-value="5">5</button>
+            <button class="calc-button" data-action="number" data-value="6">6</button>
+            <button class="calc-button operator" data-action="operator" data-value="-">-</button>
+
+            <button class="calc-button" data-action="number" data-value="1">1</button>
+            <button class="calc-button" data-action="number" data-value="2">2</button>
+            <button class="calc-button" data-action="number" data-value="3">3</button>
+            <button class="calc-button operator" data-action="operator" data-value="+">+</button>
+
+            <button class="calc-button" data-action="number" data-value="0">0</button>
+            <button class="calc-button" data-action="number" data-value=".">.</button>
+            <button class="calc-button equals" data-action="equals">=</button>
+        </div>
+    </div>
+
+    <script>
+        const previousOperandTextElement = document.querySelector('.previous-operand');
+        const currentOperandTextElement = document.querySelector('.current-operand');
+        const buttons = document.querySelectorAll('.calc-button');
+
+        let currentOperand = '';
+        let previousOperand = '';
+        let operation = undefined;
+        let clearOnNextInput = false;
+
+        function appendNumber(number) {
+            if (clearOnNextInput) {
+                currentOperand = number;
+                clearOnNextInput = false;
+            } else {
+                if (number === '.' && currentOperand.includes('.')) return;
+                currentOperand = currentOperand.toString() + number.toString();
+            }
+        }
+
+        function chooseOperation(selectedOperation) {
+            if (currentOperand === '') return;
+            if (previousOperand !== '') {
+                compute();
+            }
+            operation = selectedOperation;
+            previousOperand = currentOperand;
+            currentOperand = '';
+            clearOnNextInput = false; // Ensure display doesn't clear if an operator is pressed consecutively
+        }
+
+        function compute() {
+            let computation;
+            const prev = parseFloat(previousOperand);
+            const current = parseFloat(currentOperand);
+            if (isNaN(prev) || isNaN(current)) return;
+
+            switch (operation) {
+                case '+':
+                    computation = prev + current;
+                    break;
+                case '-':
+                    computation = prev - current;
+                    break;
+                case '*':
+                    computation = prev * current;
+                    break;
+                case '/':
+                    if (current === 0) {
+                        currentOperand = 'Error: Div by 0';
+                        previousOperand = '';
+                        operation = undefined;
+                        clearOnNextInput = true;
+                        return;
+                    }
+                    computation = prev / current;
+                    break;
+                case '%':
+                    computation = prev % current;
+                    break;
+                default:
+                    return;
+            }
+            currentOperand = computation.toString();
+            operation = undefined;
+            previousOperand = '';
+            clearOnNextInput = true;
+        }
+
+        function clear() {
+            currentOperand = '';
+            previousOperand = '';
+            operation = undefined;
+            clearOnNextInput = false;
+        }
+
+        function deleteLast() {
+            if (clearOnNextInput) {
+                currentOperand = '';
+                clearOnNextInput = false;
+            } else {
+                currentOperand = currentOperand.toString().slice(0, -1);
+            }
+            if (currentOperand === '') { // If deleted all, show 0
+                currentOperand = '';
+            }
+        }
+
+        function getDisplayNumber(number) {
+            const stringNumber = number.toString();
+            const integerDigits = parseFloat(stringNumber.split('.')[0]);
+            const decimalDigits = stringNumber.split('.')[1];
+            let integerDisplay;
+            if (isNaN(integerDigits)) {
+                integerDisplay = '';
+            } else {
+                integerDisplay = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(integerDigits);
+            }
+            if (decimalDigits != null) {
+                return `${integerDisplay}.${decimalDigits}`;
+            } else {
+                return integerDisplay;
+            }
+        }
+
+        function updateDisplay() {
+            currentOperandTextElement.innerText = getDisplayNumber(currentOperand) || '0';
+            if (operation != null) {
+                previousOperandTextElement.innerText = `${getDisplayNumber(previousOperand)} ${operation}`;
+            } else {
+                previousOperandTextElement.innerText = '';
+            }
+        }
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const action = button.dataset.action;
+                const value = button.dataset.value;
+
+                if (action === 'number') {
+                    appendNumber(value);
+                    updateDisplay();
+                } else if (action === 'operator') {
+                    chooseOperation(value);
+                    updateDisplay();
+                } else if (action === 'clear') {
+                    clear();
+                    updateDisplay();
+                } else if (action === 'delete') {
+                    deleteLast();
+                    updateDisplay();
+                } else if (action === 'equals') {
+                    compute();
+                    updateDisplay();
+                }
+            });
+        });
+
+        clear(); // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>
